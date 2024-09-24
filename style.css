@@ -45,15 +45,15 @@ h1 {
 }
 
 #payrollTable {
-    width: 100%;
+    width: 50%;
     border-collapse: collapse;
     margin-top: 20px;
 }
 
 #payrollTable th {
-    background-color: lightgreen; 
+    background-color: light-green; 
     color: black; 
-    padding: 12px;
+    padding: 20px;
     text-align: center;
     border: 1px solid black; 
 }
@@ -61,7 +61,7 @@ h1 {
 #payrollTable td {
     background-color: white; 
     color: black; 
-    padding: 12px;
+    padding: 100px;
     text-align: center;
     border: 1px solid black; 
 }
