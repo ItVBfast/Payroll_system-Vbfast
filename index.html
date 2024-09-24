@@ -12,21 +12,48 @@
         <div class="employee-form">
             <input type="text" id="employeeName" placeholder="Employee Name">
             <input type="date" id="startDate" placeholder="Start Date">
+            <input type="date" id="endDate" placeholder="End Date">
             <input type="text" id="organizationName" placeholder="Organization Name">
+            <input type="number" id="hourlyRate" placeholder="Hourly Rate">
+            <input type="text" id="taskCreatedBy" placeholder="Task Created By">
+            <input type="text" id="listCategory" placeholder="List Category">
+            <input type="text" id="listSubcategory" placeholder="List Subcategory">
+            <input type="text" id="particulars" placeholder="Particulars">
+            <input type="number" id="targetTime" placeholder="Target Time">
+            <input type="number" id="hrsDone" placeholder="Hours Done">
+            <input type="number" id="defaultRate" placeholder="Default Rate">
+            <input type="number" id="taskCharge" placeholder="Task Charge">
+            <input type="number" id="totalErrors" placeholder="Total Errors">
+            <input type="number" id="adjustmentPayment" placeholder="Adjustment Payment">
             <button id="timeInButton">Time In</button>
             <button id="timeOutButton">Time Out</button>
             <button id="downloadExcel">Download as Excel</button>
-            <input type="file" id="uploadExcel" accept=".xlsx, .xls">
+            <input type="file" id="uploadExcel" accept=".xlsx, .xls" multiple>
         </div>
         <table id="payrollTable">
             <thead>
                 <tr>
                     <th>Employee Name</th>
                     <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Total Hours</th>
                     <th>Time In</th>
                     <th>Time Out</th>
-                    <th>Total Hours</th>
+                    <th>Hourly Rate</th>
+                    <th>Task Created By</th>
+                    <th>List Category</th>
+                    <th>List Subcategory</th>
+                    <th>Particulars</th>
+                    <th>Target Time</th>
+                    <th>Hours Done</th>
+                    <th>Default Rate</th>
+                    <th>Task Charge</th>
+                    <th>Total Errors</th>
+                    <th>Total Bill</th>
+                    <th>Adjustment Payment (+/-)</th>
+                    <th>Adjusted Net Bill</th>
                     <th>Organization Name</th>
+                    <th>Save</th>
                 </tr>
             </thead>
             <tbody>
