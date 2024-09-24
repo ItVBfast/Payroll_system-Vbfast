@@ -11,6 +11,18 @@ function timeIn() {
     const organizationName = document.getElementById("organizationName").value;
     const timeIn = new Date().toLocaleTimeString();
 
+    const hourlyRate = document.getElementById("hourlyRate").value;
+    const taskCreatedBy = document.getElementById("taskCreatedBy").value;
+    const listCategory = document.getElementById("listCategory").value;
+    const listSubcategory = document.getElementById("listSubcategory").value;
+    const particulars = document.getElementById("particulars").value;
+    const targetTime = document.getElementById("targetTime").value;
+    const hrsDone = document.getElementById("hrsDone").value;
+    const defaultRate = document.getElementById("defaultRate").value;
+    const taskCharge = document.getElementById("taskCharge").value;
+    const totalErrors = document.getElementById("totalErrors").value;
+    const adjustmentPayment = document.getElementById("adjustmentPayment").value;
+
     if (employeeName === "" || startDate === "" || organizationName === "") {
         alert("Please fill out all fields.");
         return;
@@ -22,6 +34,19 @@ function timeIn() {
         timeIn,
         timeOut: "",
         totalHours: "",
+        hourlyRate,
+        taskCreatedBy,
+        listCategory,
+        listSubcategory,
+        particulars,
+        targetTime,
+        hrsDone,
+        defaultRate,
+        taskCharge,
+        totalErrors,
+        totalBill: 0,
+        adjustmentPayment,
+        adjustedNetBill: 0,
         organizationName
     };
 
@@ -44,6 +69,8 @@ function timeOut() {
     if (row) {
         row.timeOut = timeOut;
         row.totalHours = calculateTotalHours(row.timeIn, timeOut);
+        row.totalBill = calculateTotalBill(row);
+        row.adjustedNetBill = row.totalBill + parseFloat(row.adjustmentPayment || 0);
         updateTable();
     } else {
         alert("Please check the employee name and organization.");
@@ -51,20 +78,20 @@ function timeOut() {
 }
 
 function calculateTotalHours(timeIn, timeOut) {
-    const [inHours, inMinutes] = timeIn.split(":").map(part => parseInt(part));
-    const [outHours, outMinutes] = timeOut.split(":").map(part => parseInt(part));
+    const [inHours, inMinutes, inSeconds] = timeIn.split(":").map(part => parseInt(part));
+    const [outHours, outMinutes, outSeconds] = timeOut.split(":").map(part => parseInt(part));
 
     const inDate = new Date();
-    inDate.setHours(inHours, inMinutes, 0, 0);
+    inDate.setHours(inHours, inMinutes, inSeconds || 0);
 
     const outDate = new Date();
-    outDate.setHours(outHours, outMinutes, 0, 0);
+    outDate.setHours(outHours, outMinutes, outSeconds || 0);
 
     let diffMs = outDate - inDate;
 
-    // If the timeOut is earlier in the day than timeIn, assume it occurred on the next day
+    // Handling the case where Time Out is earlier in the day than Time In
     if (diffMs < 0) {
-        diffMs += 24 * 60 * 60 * 1000; // Add 24 hours
+        diffMs += 24 * 60 * 60 * 1000;
     }
 
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
@@ -73,71 +100,77 @@ function calculateTotalHours(timeIn, timeOut) {
     return `${diffHours}h ${diffMinutes}m`;
 }
 
+function calculateTotalBill(row) {
+    return parseFloat(row.hrsDone || 0) * parseFloat(row.hourlyRate || 0) + parseFloat(row.taskCharge || 0);
+}
+
 function updateTable() {
     const tbody = document.querySelector("#payrollTable tbody");
     tbody.innerHTML = "";
 
-    employeeData.forEach((data) => {
+    employeeData.forEach((data, index) => {
         const row = tbody.insertRow();
 
-        row.insertCell(0).innerText = data.employeeName;
-        row.insertCell(1).innerText = data.startDate;
-        row.insertCell(2).innerText = data.timeIn;
-        row.insertCell(3).innerText = data.timeOut;
-        row.insertCell(4).innerText = data.totalHours;
-        row.insertCell(5).innerText = data.organizationName;
+        // Create editable cells for each row
+        for (let key in data) {
+            if (data.hasOwnProperty(key)) {
+                const cell = row.insertCell();
+                const input = document.createElement("input");
+                input.value = data[key];
+                input.setAttribute("data-key", key);
+                input.setAttribute("data-index", index);
+                cell.appendChild(input);
+            }
+        }
+
+        const editCell = row.insertCell(0);
+        const saveCell = row.insertCell(-1);
+        const saveButton = document.createElement("button");
+        saveButton.innerText = "Save";
+        saveButton.addEventListener("click", () => saveRow(index));
+        saveCell.appendChild(saveButton);
     });
 }
 
-function downloadExcel() {
-    if (employeeData.length === 0) {
-        alert("No data to export.");
-        return;
-    }
-
-    const csvContent = [
-        ["Employee Name", "Start Date", "Time In", "Time Out", "Total Hours", "Organization Name"],
-        ...employeeData.map((data) =>
-            [data.employeeName, data.startDate, data.timeIn, data.timeOut, data.totalHours, data.organizationName]
-        ),
-    ]
-    .map((row) => row.join(","))
-    .join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.setAttribute("download", "employee_payroll.csv");
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
-
 function handleFileUpload(event) {
-    const file = event.target.files[0];
-    if (file) {
+    const files = event.target.files;
+    Array.from(files).forEach(file => {
         const reader = new FileReader();
-        reader.onload = function(e) {
-            const data = new Uint8Array(e.target.result);
+        reader.onload = function(event) {
+            const data = new Uint8Array(event.target.result);
             const workbook = XLSX.read(data, { type: 'array' });
-            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-            const jsonData = XLSX.utils.sheet_to_json(firstSheet);
 
-            jsonData.forEach(row => {
-                const newRow = {
-                    employeeName: row['Employee Name'] || '',
-                    startDate: row['Start Date'] || '',
-                    timeIn: row['Time In'] || '',
-                    timeOut: row['Time Out'] || '',
-                    totalHours: row['Total Hours'] || '',
-                    organizationName: row['Organization Name'] || ''
-                };
-                employeeData.push(newRow);
+            workbook.SheetNames.forEach(sheetName => {
+                const sheetData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+                sheetData.forEach((row) => {
+                    employeeData.push({
+                        employeeName: row['Employee Name'] || "",
+                        startDate: row['Start Date'] || "",
+                        endDate: row['End Date'] || "",
+                        timeIn: row['Time In'] || "",
+                        timeOut: row['Time Out'] || "",
+                        totalHours: row['Total Hours'] || "",
+                        hourlyRate: row['Hourly Rate'] || 0,
+                        taskCreatedBy: row['Task Created By'] || "",
+                        listCategory: row['List Category'] || "",
+                        listSubcategory: row['List Subcategory'] || "",
+                        particulars: row['Particulars'] || "",
+                        targetTime: row['Target Time'] || 0,
+                        hrsDone: row['Hours Done'] || 0,
+                        defaultRate: row['Default Rate'] || 0,
+                        taskCharge: row['Task Charge'] || 0,
+                        totalErrors: row['Total Errors'] || 0,
+                        totalBill: row['Total Bill'] || 0,
+                        adjustmentPayment: row['Adjustment Payment'] || 0,
+                        adjustedNetBill: row['Adjusted Net Bill'] || 0,
+                        organizationName: row['Organization Name'] || ""
+                    });
+                });
             });
-            updateTable();
+
+            updateTable();  // Ensure the table is updated with the new data
         };
         reader.readAsArrayBuffer(file);
-    }
+    });
 }
